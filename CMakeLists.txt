@@ -565,7 +565,7 @@ endif(CCACHE)
 
 # Check for external dependencies ==============================================
 include(external/pthread.cmake)
-#include(external/mpi.cmake)
+include(external/mpi.cmake)
 include(external/papi.cmake)
 if(MADNESS_SEARCH_LAPACK)
 	include(external/lapack.cmake)
