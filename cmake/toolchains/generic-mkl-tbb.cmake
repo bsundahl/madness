@@ -65,4 +65,3 @@ set(LAPACK_LIBRARIES "-L${MKL_ROOT_DIR}/lib" "-lmkl_intel_ilp64" "-lmkl_core"
 set(LAPACK_INCLUDE_DIRS ${MKL_ROOT_DIR}/include CACHE STRING "LAPACK include directories")
 set(LAPACK_COMPILE_DEFINITIONS MKL_DIRECT_CALL;MKL_INT=long CACHE STRING "LAPACK compile definitions")
 set(FORTRAN_INTEGER_SIZE "8" CACHE STRING "Set Fortran integer size to 8 bytes")
-
