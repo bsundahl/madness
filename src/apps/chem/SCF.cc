@@ -2502,78 +2502,34 @@ restart:
 	if (m > 1)
 		newQ(Slice(0, -2), Slice(0, -2)) = Q;
 
-	newQ(m - 1, _) = ms;
-	newQ(_, m - 1) = sm;
-	Q = newQ;
-	//if (world.rank() == 0) { print("kain Q"); print(Q); }
-	tensorT c;
-	//if (world.rank() == 0) {
-	double rcond = 1e-12;
-	while (1)
-	{
-		c = KAIN(Q, rcond);
-		if (world.rank() == 0 and (param.print_level() > 3))
-			print("kain c:", c);
-		//if (std::abs(c[m - 1]) < 5.0) { // was 3
-		if (c.absmax() < 3.0)
-		{ // was 3
-			break;
-		}
-		else if (rcond < 0.01)
-		{
-			if (world.rank() == 0 and (param.print_level() > 3))
-				print("Increasing subspace singular value threshold ", c[m - 1], rcond);
-			rcond *= 100;
-		}
-		else
-		{
-			//print("Forcing full step due to subspace malfunction");
-			// c = 0.0;
-			// c[m - 1] = 1.0;
-			// break;
-			if (world.rank() == 0 and (param.print_level() > 3))
-				print("Restarting KAIN due to subspace malfunction");
-			Q = tensorT();
-			subspace.clear();
-			goto restart; // fortran hat on ...
-		}
-	}
-	//}
-	END_TIMER(world, "Update subspace stuff");
-
-	world.gop.broadcast_serializable(c, 0); // make sure everyone has same data
-	if (world.rank() == 0 and (param.print_level() > 3))
-	{
-		print("Subspace solution", c);
-	}
-	START_TIMER(world);
-	vecfuncT amo_new = zero_functions_compressed<double, 3>(world, amo.size(), false);
-	vecfuncT bmo_new = zero_functions_compressed<double, 3>(world, bmo.size(), false);
-	world.gop.fence();
-	for (unsigned int m = 0; m < subspace.size(); ++m)
-	{
-		const vecfuncT &vm = subspace[m].first;
-		const vecfuncT &rm = subspace[m].second;
-		const vecfuncT vma(vm.begin(), vm.begin() + amo.size());
-		const vecfuncT rma(rm.begin(), rm.begin() + amo.size());
-		const vecfuncT vmb(vm.end() - bmo.size(), vm.end());
-		const vecfuncT rmb(rm.end() - bmo.size(), rm.end());
-		gaxpy(world, 1.0, amo_new, c(m), vma, false);
-		gaxpy(world, 1.0, amo_new, -c(m), rma, false);
-		gaxpy(world, 1.0, bmo_new, c(m), vmb, false);
-		gaxpy(world, 1.0, bmo_new, -c(m), rmb, false);
-	}
-	world.gop.fence();
-	END_TIMER(world, "Subspace transform");
-	if (param.maxsub() <= 1)
-	{
-		subspace.clear();
-	}
-	else if (subspace.size() == param.maxsub())
-	{
-		subspace.erase(subspace.begin());
-		Q = Q(Slice(1, -1), Slice(1, -1));
-	}
+				world.gop.broadcast_serializable(c, 0); // make sure everyone has same data
+				if (world.rank() == 0 and (param.print_level()>3)) {
+					print("Subspace solution", c);
+				}
+				START_TIMER(world);
+				vecfuncT amo_new = zero_functions_compressed<double, 3>(world, amo.size(), false);
+				vecfuncT bmo_new = zero_functions_compressed<double, 3>(world, bmo.size(), false);
+				world.gop.fence();
+				for (unsigned int m = 0; m < subspace.size(); ++m) {
+					const vecfuncT & vm = subspace[m].first;
+					const vecfuncT & rm = subspace[m].second;
+					const vecfuncT vma(vm.begin(), vm.begin() + amo.size());
+					const vecfuncT rma(rm.begin(), rm.begin() + amo.size());
+					const vecfuncT vmb(vm.end() - bmo.size(), vm.end());
+					const vecfuncT rmb(rm.end() - bmo.size(), rm.end());
+					gaxpy(world, 1.0, amo_new, c(m), vma, false);
+					gaxpy(world, 1.0, amo_new, -c(m), rma, false);
+					gaxpy(world, 1.0, bmo_new, c(m), vmb, false);
+					gaxpy(world, 1.0, bmo_new, -c(m), rmb, false);
+				}
+				world.gop.fence();
+				END_TIMER(world, "Subspace transform");
+				if (param.maxsub() <= 1) {
+					subspace.clear();
+				} else if (subspace.size() == size_t(param.maxsub())) {
+					subspace.erase(subspace.begin());
+					Q = Q(Slice(1, -1), Slice(1, -1));
+				}
 
 	do_step_restriction(world, amo, amo_new, "alpha");
 	orthonormalize(world, amo_new, param.nalpha());
@@ -3401,9 +3357,7 @@ void SCF::update_response_subspace(World &world,
 	if (param.maxsub() <= 1)
 	{
 		subspace.clear();
-	}
-	else if (subspace.size() == param.maxsub())
-	{
+	} else if(subspace.size() == size_t(param.maxsub())){
 		subspace.erase(subspace.begin());
 		Q = Q(Slice(1, -1), Slice(1, -1));
 	}
