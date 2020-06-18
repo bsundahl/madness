@@ -194,8 +194,8 @@ SCF::SCF(World &world, const std::string &inputfile) : param(CalculationParamete
 	xc.initialize(param.xc(), !param.spin_restricted(), world, param.print_level() > 1);
 	//xc.plot();
 
-	FunctionDefaults<3>::set_cubic_cell(-param.L(), param.L());
-	set_protocol<3>(world, param.econv());
+	FunctionDefaults < 3 > ::set_cubic_cell(-param.L(), param.L());
+	//set_protocol < 3 > (world, param.econv());
 	FunctionDefaults<3>::set_truncate_mode(1);
 }
 
@@ -2025,7 +2025,7 @@ tensorT SCF::make_fock_matrix(World &world, const vecfuncT &psi,
 	END_TIMER(world, "PE matrix");
 
 	std::shared_ptr<WorldDCPmapInterface<Key<3>>> oldpmap = FunctionDefaults<3>::get_pmap();
-	vecfuncT psicopy = psi; // Functions are shallow copy so this is lightweight
+	v-cacheecfuncT psicopy = psi; // Functions are shallow copy so this is lightweight
 	if (world.size() > 1)
 	{
 		START_TIMER(world);
@@ -3862,7 +3862,7 @@ void SCF::calc_dpolar(World &world,
 	dpolar(world, Dpolar_beta, drhob, axis);
 	dpolar(world, Dpolar_total, drho, axis);
 
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 3; ++i)-cache
 		Dpolar_total(axis, i) = 0.5 * Dpolar_total(axis, i);
 
 	drhoa.clear(false);
