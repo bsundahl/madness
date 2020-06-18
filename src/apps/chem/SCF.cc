@@ -585,13 +585,15 @@ distmatT SCF::localize_new(World &world, const vecfuncT &mo,
 	for (int i = 0; i < nmo; ++i)
 		U(i, i) = 1.0;
 
-	if (world.rank() == 0)
-	{
+
+	default_random_generator.setstate(182041+world.rank()*10101); // To help with reproducibility for debugging, etc.
+
+	if (world.rank() == 0) {
 		//MKL_Set_Num_Threads_Local(16);
 
-		tensorT Q(nmo, natom);
-
-		auto QQ = [&at_to_bf, &at_nbf](const tensorT &C, int i, int j, int a) -> double {
+		tensorT Q(nmo,natom);
+		double breaksym = 1e-3;
+		auto QQ = [&at_to_bf, &at_nbf,&breaksym](const tensorT& C, int i, int j, int a) -> double {
 			int lo = at_to_bf[a], nbf = at_nbf[a];
 			const double *Ci = &C(i, lo);
 			const double *Cj = &C(j, lo);
@@ -2828,9 +2830,8 @@ void SCF::iterate_trotter(World &world, Convolution1D<double_complex> *G,
 		camo[iorb] = APPLY(G, camo3[iorb]);
 		camo[iorb].truncate();
 	}
-	if (!param.spin_restricted() && param.nbeta())
-	{
-		cvecfuncT cbmo3 = mul_sparse(world, expV, cbmo2, vtol, false);
+	if (!param.spin_restricted() && param.nbeta()) {
+     	        cvecfuncT cbmo3 = mul_sparse(world, expV, cbmo2, vtol); // Removed nofence --- must fence here
 
 		// second kinetic energy apply
 		for (int iorb = 0; iorb < param.nbeta(); iorb++)
@@ -3595,8 +3596,9 @@ vecfuncT SCF::calc_dipole_mo(World &world, vecfuncT &mo, const int axis)
 	reconstruct(world, mo);
 
 	// dipolefunc * mo[iter]
-	for (size_t p = 0; p < mo.size(); ++p)
-		dipolemo[p] = mul_sparse(dipolefunc, mo[p], false);
+	for(size_t p=0; p<mo.size(); ++p)
+		dipolemo[p] =  mul_sparse(dipolefunc, mo[p],false);
+	world.gop.fence(); // Must fence here
 
 	//END_TIMER(world, "Make perturbation");
 	print_meminfo(world.rank(), "Make perturbation");
