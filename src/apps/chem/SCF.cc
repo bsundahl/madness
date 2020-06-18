@@ -588,6 +588,9 @@ distmatT SCF::localize_new(World &world, const vecfuncT &mo,
 
 	default_random_generator.setstate(182041+world.rank()*10101); // To help with reproducibility for debugging, etc.
 
+
+	default_random_generator.setstate(182041+world.rank()*10101); // To help with reproducibility for debugging, etc.
+
 	if (world.rank() == 0) {
 		//MKL_Set_Num_Threads_Local(16);
 
@@ -598,9 +601,8 @@ distmatT SCF::localize_new(World &world, const vecfuncT &mo,
 			const double *Ci = &C(i, lo);
 			const double *Cj = &C(j, lo);
 			double qij = 0.0;
-			for (int mu = 0; mu < nbf; ++mu)
-				qij += Ci[mu] * Cj[mu];
-			return qij;
+			for(int mu=0; mu<nbf; ++mu) qij += Ci[mu] * Cj[mu];
+			return qij*(1.0+breaksym*a); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! break symmetry
 		};
 
 		auto makeGW = [&Q, &nmo, &natom, &QQ](const tensorT &C, double &W, tensorT &g) -> void {
@@ -719,9 +721,14 @@ distmatT SCF::localize_new(World &world, const vecfuncT &mo,
 				mu = mu2;
 			}
 
-			dU = matrix_exponential(x * mu);
-			U = inner(U, dU, 1, 0);
-			C = inner(dU, C, 0, 0);
+			if (maxg < 10*thresh) {
+			  breaksym = 1e-5;
+			  rprev = true; // since just messed up the gradient
+			}
+
+			dU = matrix_exponential(x*mu);
+			U = inner(U,dU,1,0);
+			C = inner(dU,C,0,0);
 		}
 		bool switched = true;
 		while (switched)
@@ -842,8 +849,8 @@ distmatT SCF::localize_boys(World &world, const vecfuncT &mo,
 	if (thresh < 1e-6)
 		thresh = 1e-6; //<<<<<<<<<<<<<<<<<<<<< need to implement new line search like in pm routine
 	tensorT U(nmo, nmo);
-	if (world.rank() == 0)
-	{
+	default_random_generator.setstate(182041+world.rank()*10101); // To help with reproducibility for debugging, etc.
+	if (world.rank() == 0) {
 		for (long i = 0; i < nmo; ++i)
 			U(i, i) = 1.0;
 
@@ -2954,13 +2961,13 @@ void SCF::solve(World &world)
 			if (world.rank() == 0 and (param.print_level() > 2))
 				print("delta rho", da, db, "residuals", bsh_residual,
 					  update_residual);
-		}
+			}
 
-		START_TIMER(world);
-		arho_old = arho;
-		brho_old = brho;
-		functionT rho = arho + brho;
-		rho.truncate();
+			START_TIMER(world);
+			arho_old = arho;
+			brho_old = brho;
+			functionT rho = arho + brho;
+						rho.truncate();
 
 		real_function_3d vnuc;
 		if (param.psp_calc())
