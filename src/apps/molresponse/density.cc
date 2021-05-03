@@ -26,12 +26,12 @@ typedef std::vector<real_function_3d> VectorFunction3DT;
 // it also needs an xc functional
 // The Rparams and Gparmas used to create the density
 //
-FirstOrderDensity::FirstOrderDensity(ResponseParameters Rparams,
+density_vector::density_vector(ResponseParameters Rparams,
                                      GroundParameters Gparams) {
   this->Rparams = Rparams;
   this->Gparams = Gparams;
 }
-void FirstOrderDensity::ComputeResponse(World &world) {
+void density_vector::ComputeResponse(World &world) {
   // right now everything uses copy
   property = Rparams.response_type;
   // TDHF sets the TDHF with paramaters...
@@ -90,16 +90,16 @@ void FirstOrderDensity::ComputeResponse(World &world) {
 
 // right now everything uses copy
 
-size_t FirstOrderDensity::GetNumberResponseStates() { return num_states; }
-size_t FirstOrderDensity::GetNumberGroundStates() { return num_ground_states; }
-VectorFunction3DT FirstOrderDensity::GetDensityVector() { return rho_omega; }
-const Molecule FirstOrderDensity::GetMolecule() { return Gparams.molecule; }
-TensorT FirstOrderDensity::GetFrequencyOmega() { return omega; }
-ResponseParameters FirstOrderDensity::GetResponseParameters() {
+size_t density_vector::GetNumberResponseStates() { return num_states; }
+size_t density_vector::GetNumberGroundStates() { return num_ground_states; }
+VectorFunction3DT density_vector::GetDensityVector() { return rho_omega; }
+const Molecule density_vector::GetMolecule() { return Gparams.molecule; }
+TensorT density_vector::GetFrequencyOmega() { return omega; }
+ResponseParameters density_vector::GetResponseParameters() {
   return Rparams;
 }
 
-VectorFunction3DT FirstOrderDensity::ComputeDensityVector(World &world,
+VectorFunction3DT density_vector::ComputeDensityVector(World &world,
                                                           bool is_static) {
   std::vector<real_function_3d> densities =
       zero_functions<double, 3>(world, num_states);
@@ -137,7 +137,7 @@ VectorFunction3DT FirstOrderDensity::ComputeDensityVector(World &world,
   truncate(world, densities);
   return densities;
 }
-void FirstOrderDensity::PrintDensityInformation() {
+void density_vector::PrintDensityInformation() {
   // print
   //
   print("Response Density Information");
@@ -151,7 +151,7 @@ void FirstOrderDensity::PrintDensityInformation() {
   print("Number of Ground States : ", num_ground_states);
 }
 
-void FirstOrderDensity::PlotResponseDensity(World &world) {
+void density_vector::PlotResponseDensity(World &world) {
   // Doing line plots along each axis
   if (world.rank() == 0) print("\n\nStarting plots");
   coord_3d lo, hi;
@@ -175,7 +175,7 @@ void FirstOrderDensity::PlotResponseDensity(World &world) {
     plot_line(plotname, 5001, lo, hi, rho_omega[i]);
   }
 }
-Tensor<double> FirstOrderDensity::ComputeSecondOrderPropertyTensor(
+Tensor<double> density_vector::ComputeSecondOrderPropertyTensor(
     World &world) {
   X_space PQ(P, P);
   Tensor<double> H = -2 * inner(Chi, PQ);
@@ -205,7 +205,7 @@ Tensor<double> FirstOrderDensity::ComputeSecondOrderPropertyTensor(
   return H;
 }
 
-void FirstOrderDensity::PrintSecondOrderAnalysis(
+void density_vector::PrintSecondOrderAnalysis(
     World &world,
     const Tensor<double> alpha_tensor) {
   Tensor<double> V, epolar;
@@ -237,7 +237,7 @@ void FirstOrderDensity::PrintSecondOrderAnalysis(
     }
   }
 }
-void FirstOrderDensity::SaveDensity(World &world, std::string name) {
+void density_vector::SaveDensity(World &world, std::string name) {
   // Archive to write everything to
   archive::ParallelOutputArchive ar(world, name.c_str(), 1);
   // Just going to enforce 1 io server
@@ -279,7 +279,7 @@ void FirstOrderDensity::SaveDensity(World &world, std::string name) {
   }
 }
 // Load a response calculation
-void FirstOrderDensity::LoadDensity(World &world,
+void density_vector::LoadDensity(World &world,
                                     std::string name,
                                     ResponseParameters Rparams,
                                     GroundParameters Gparams) {
