@@ -225,6 +225,7 @@ response_space& TDDFT::GetResponseFunctions(std::string xy) {
   }
 }
 X_space& TDDFT::GetXspace() { return Chi; }
+X_space& TDDFT::GetPQspace() { return PQ; }
 response_space& TDDFT::GetPVector() { return P; }
 response_space& TDDFT::GetQVector() { return Q; }
 // Get response parameters

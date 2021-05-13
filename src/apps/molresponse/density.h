@@ -42,11 +42,7 @@ class density_vector {
   GroundParameters Gparams;    // Ground Parameters
 
   X_space Chi;
-  response_space x;  // The x response functions virt/occ
-  response_space y;  // occ/virt
-
-  response_space P;  // rhs vector P
-  response_space Q;  // rhs vector Q
+  X_space V;
 
   // first order frequency response densities
   VectorFunction3DT rho_omega;  // the response density vector
